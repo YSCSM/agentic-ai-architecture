@@ -1,13 +1,14 @@
-# ADR-0003: Route by domain before retrieval
+# ADR-0003: Detect the domain first and use it as a retrieval filter
 
 **Status:** Accepted
 
 ## Context
-Finance, insurance and general questions need different vocabulary, retrieval settings and answer styles. A single pipeline produces generic answers.
+Finance, insurance and general questions use different vocabulary and documents. Searching all of a tenant's documents for every question returns loosely related results.
 
 ## Decision
-Classify each request into a domain first, then run domain-specific retrieval and analysis prompts.
+The first node classifies the goal into a domain. The `analyze` node then queries Pinecone with both `namespace=tenant` and a `domain` metadata filter.
 
 ## Consequences
-- **Better:** more relevant retrieval and answers per domain; domains can be added independently.
-- **Costs:** an extra classification step adds latency; misrouted questions get weaker answers, so routing accuracy should be evaluated.
+- **Better:** more relevant retrieval; domains can be added by adding documents with a new domain label.
+- **Costs:** one extra LLM call; a misclassified question searches the wrong documents.
+- **Mitigation:** the `reflect` node flags low-confidence answers; routing accuracy should be added to evaluation.
